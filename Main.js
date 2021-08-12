@@ -59,7 +59,7 @@ function toGraph (rainfall) {
 
 function main() {
   let json = getRainfall();
-  let total = json.Feature[0].Property.WeatherList.Weather.slice(0, Math.floor(json.Feature[0].Property.WeatherList.Weather.lenght / 2)).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
+  let total = json.Feature[0].Property.WeatherList.Weather.slice(0, 7).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
   console.log(json.Feature[0].Property.WeatherList.Weather);
   if (sheet.getRange("B5").getValue()) {
     if (total > 0) {
