@@ -24,13 +24,16 @@ GAS を利用して実装・10分おきに実行。
 
 ## 利用方法
 Google ドライブにて Google スプレッドシート を新規作成。  
+シート名を*Main*に変更。  
 ID (URL末尾の"*edit#gid=0*"などを除く数十文字の文字列 例:docs\.google\.com/spreadsheets/d/**{ID}**/edit#gid=0)を確認。  
 Data.csv の形式に倣い、  
 セルB1に LINE Notify のアクセストークン  
 セルB2に 東経、セルB3に 北緯 (天気取得地点)  
 セルB4に [Yahoo! アプリケーションID](https://developer.yahoo.co.jp/)  
-セルB5に TRUE
+セルB5に TRUE  
 セルB6に 稼働してほしいときに真を返す関数、あるいは常にTRUE(真)  
+セルB7に Weather API key  
+セルB8に weatherbit-v1-mashape.p.rapidapi.com
 をそれぞれ取得し、記入。  
 Google ドライブにて Google Apps Script を新規作成。  
 Main.js の内容を複製し保存。ただし、一行目、二重引用符内を確認したIDに書き換え、保存。  
