@@ -59,9 +59,9 @@ function toGraph (rainfall) {
 
 function main() {
   let json = getRainfall();
-  let total = json.Feature[0].Property.WeatherList.Weather.slice(0, 7).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
   console.log(json.Feature[0].Property.WeatherList.Weather);
   if (sheet.getRange("B5").getValue()) {
+    let total = json.Feature[0].Property.WeatherList.Weather.slice(0, 7).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
     if (total > 0) {
       let date = json.Feature[0].Property.WeatherList.Weather[0].Date;
       date = date.slice(0,4)+"/"+date.slice(4,6)+"/"+date.slice(6,8)+" "+date.slice(8,10)+":"+date.slice(-2);
@@ -77,6 +77,7 @@ function main() {
       }
     }
   } else {
+    let total = json.Feature[0].Property.WeatherList.Weather.reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
     if (total <= 0) {
       let chances = getRainChance(3);
       let chances_sum = chances.reduce(function(sum, element) {return sum + element;}, 0);
