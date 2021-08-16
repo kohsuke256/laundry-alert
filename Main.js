@@ -5,7 +5,8 @@ let sheet = spreadsheet.getSheetByName("Main");
 const LINE_TOKEN = sheet.getRange("B1").getValue();
 const LONGITUDE = sheet.getRange("B2").getValue();
 const LATITUDE = sheet.getRange("B3").getValue();
-const COORDINATES = `${LONGITUDE},${LATITUDE}`;
+const COORDINATE = `${LONGITUDE},${LATITUDE}`;
+const COORDINATES = `${LONGITUDE},${LATITUDE} ${LONGITUDE + 0.01},${LATITUDE} ${LONGITUDE - 0.01},${LATITUDE} ${LONGITUDE},${LATITUDE + 0.01} ${LONGITUDE},${LATITUDE - 0.01}`;
 const YAHOO_ID = sheet.getRange("B4").getValue();
 const WEATHER_API_KEY = sheet.getRange("B7").getValue();
 const WEATHER_API_HOST = sheet.getRange("B8").getValue();
@@ -22,7 +23,16 @@ function sendToLine(text) {
 }
 
 function getRainfall() {
+  let apiUrl = `https://map.yahooapis.jp/weather/V1/place?coordinates=${COORDINATE}&output=json&appid=${YAHOO_ID}&interval=5`;
+  console.log(apiUrl);
+  let response = UrlFetchApp.fetch(apiUrl);
+  let json = JSON.parse(response.getContentText());
+  return json;
+}
+
+function getRainfalls() {
   let apiUrl = `https://map.yahooapis.jp/weather/V1/place?coordinates=${COORDINATES}&output=json&appid=${YAHOO_ID}&interval=5`;
+  console.log(apiUrl);
   let response = UrlFetchApp.fetch(apiUrl);
   let json = JSON.parse(response.getContentText());
   return json;
@@ -58,9 +68,9 @@ function toGraph (rainfall) {
 }
 
 function main() {
-  let json = getRainfall();
-  console.log(json.Feature[0].Property.WeatherList.Weather);
   if (sheet.getRange("B5").getValue()) {
+    let json = getRainfall();
+    console.log(json.Feature[0].Property.WeatherList.Weather);
     let total = json.Feature[0].Property.WeatherList.Weather.slice(0, 7).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
     if (total > 0) {
       let date = json.Feature[0].Property.WeatherList.Weather[0].Date;
@@ -77,11 +87,16 @@ function main() {
       }
     }
   } else {
-    let total = json.Feature[0].Property.WeatherList.Weather.reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
+    let json = getRainfalls();
+    for (let i = 0; i < 5; i++) {
+      console.log(json.Feature[i].Property.WeatherList.Weather);
+    }
+    // let total = json.Feature[0].Property.WeatherList.Weather.reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
+    let total = json.Feature.reduce(function(sum, element) {return sum + element.Property.WeatherList.Weather.reduce(function(sum, element) {return sum + element.Rainfall;}, 0);}, 0);
     if (total <= 0) {
       let chances = getRainChance(3);
       let chances_sum = chances.reduce(function(sum, element) {return sum + element;}, 0);
-      if (chances[0] <= 5 && chances_sum <= 25) {
+      if (chances[0] <= 5 && chances_sum <= 15) {
         console.log(chances);
         sheet.getRange("B5").setValue(true);
         if (sheet.getRange("B6").getValue()) {
