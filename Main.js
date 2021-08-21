@@ -1,18 +1,22 @@
 const FILE_ID = "{ID}";
 let spreadsheet = SpreadsheetApp.openById(FILE_ID);
-let sheet = spreadsheet.getSheetByName("Main");
+let mainSheet = spreadsheet.getSheetByName("Main");
 
-const LINE_TOKEN = sheet.getRange("B1").getValue();
-const LONGITUDE = sheet.getRange("B2").getValue();
-const LATITUDE = sheet.getRange("B3").getValue();
+const LINE_TOKEN = mainSheet.getRange("B1").getValue();
+const LONGITUDE = mainSheet.getRange("B2").getValue();
+const LATITUDE = mainSheet.getRange("B3").getValue();
 const COORDINATE = `${LONGITUDE},${LATITUDE}`;
 const COORDINATES = `${LONGITUDE},${LATITUDE} ${LONGITUDE + 0.01},${LATITUDE} ${LONGITUDE - 0.01},${LATITUDE} ${LONGITUDE},${LATITUDE + 0.01} ${LONGITUDE},${LATITUDE - 0.01}`;
-const YAHOO_ID = sheet.getRange("B4").getValue();
-const WEATHER_API_KEY = sheet.getRange("B7").getValue();
-const WEATHER_API_HOST = sheet.getRange("B8").getValue();
+const YAHOO_ID = mainSheet.getRange("B4").getValue();
+const WEATHER_API_KEY = mainSheet.getRange("B7").getValue();
+const WEATHER_API_HOST = mainSheet.getRange("B8").getValue();
 
 const BLOCK_ELEMENTS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"]
 
+function sendMessage(text, sub="洗濯アラート") {
+  sendToLine(text);
+  sendToMail(text, sub);
+}
 
 function sendToLine(text) {
    UrlFetchApp.fetch("https://notify-api.line.me/api/notify/", {
@@ -20,6 +24,10 @@ function sendToLine(text) {
      "payload" : {"message" : text},
      "headers" : {"Authorization" : "Bearer " + LINE_TOKEN}
    });
+}
+
+function sendToMail(text, sub) {
+  MailApp.sendEmail(mainSheet.getRange("B9").getValue(), sub, text);
 }
 
 function getRainfall() {
@@ -68,7 +76,7 @@ function toGraph (rainfall) {
 }
 
 function main() {
-  if (sheet.getRange("B5").getValue()) {
+  if (mainSheet.getRange("B5").getValue()) {
     let json = getRainfall();
     console.log(json.Feature[0].Property.WeatherList.Weather);
     let total = json.Feature[0].Property.WeatherList.Weather.slice(0, 7).reduce(function(sum, element) {return sum + element.Rainfall;}, 0);
@@ -79,9 +87,9 @@ function main() {
       for (d of json.Feature[0].Property.WeatherList.Weather) {
         rainfalls.push(toGraph(d.Rainfall));
       }
-      sheet.getRange("B5").setValue(false);
-      if (sheet.getRange("B6").getValue()) {
-        sendToLine(` ${date}\n${rainfalls.join("\n")}`);
+      mainSheet.getRange("B5").setValue(false);
+      if (mainSheet.getRange("B6").getValue()) {
+        sendMessage(` ${date}\n${rainfalls.join("\n")}`);
       } else {
         console.log("Start raining.");
       }
@@ -98,22 +106,22 @@ function main() {
       let chances_sum = chances.reduce(function(sum, element) {return sum + element;}, 0);
       if (chances[0] <= 5 && chances_sum <= 15) {
         console.log(chances);
-        sheet.getRange("B5").setValue(true);
-        if (sheet.getRange("B6").getValue()) {
+        mainSheet.getRange("B5").setValue(true);
+        if (mainSheet.getRange("B6").getValue()) {
           let date = json.Feature[0].Property.WeatherList.Weather[0].Date;
           date = date.slice(0,4)+"/"+date.slice(4,6)+"/"+date.slice(6,8)+" "+date.slice(8,10)+":"+date.slice(-2);
           let formatedChance = [];
           for (chance of chances) {
             formatedChance.push(`${chance} %`);
           }
-          sendToLine(` ${date}\n向こう一時間、降水はない模様です\n${formatedChance.join("\n")}`);
+          sendMessage(` ${date}\n向こう一時間、降水はない模様です\n${formatedChance.join("\n")}`);
         } else {
           console.log("Stop raining.");
         }
       }
     }
   }
-  if (!sheet.getRange("B6").getValue()) {
+  if (!mainSheet.getRange("B6").getValue()) {
     console.log("Deactivated.");
   }
 }
